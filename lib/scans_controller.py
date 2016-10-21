@@ -1,21 +1,13 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-import cloudpassage
-import lib.loadyaml as loadyaml
+from api_controller import ApiController
 
 class ScansController(object):
     def __init__(self):
-        self.configs = loadyaml.load_portal()
+        self.api = ApiController()
 
-    def create_halo_session_object(self):
-        """create halo session object"""
+    def index(self, **kwargs):
+        return self.api.get_paginated("/v1/scans", **kwargs)
 
-        session = cloudpassage.HaloSession(self.configs['key_id'], self.configs['secret_key'])
-        return session
-
-    def index(self, options = None):
-        """HTTP Index scans from Halo"""
-        session = self.create_halo_session_object()
-        api = cloudpassage.HttpHelper(session)
-        url = "/v1/scans?%s" % options
-        return api.get(url)
+    def show(self, scan_id):
+        return self.api.get("/v1/scans/%s" % scan_id)
