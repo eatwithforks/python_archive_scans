@@ -58,9 +58,10 @@ class ArchiveScans(object):
             scans_index = self.scans.index(**kwargs)
             self.setup_queue()
             for scan in scans_index:
-                data = self.scans.show(scan['id'])['scan']
-                scan_path = self.scans_path(server_path, data)
-                self.q.put({'path': scan_path, 'data': data})
+                scan_path = self.scans_path(server_path, scan)
+                if not os.path.isfile(scan_path):
+                    data = self.scans.show(scan['id'])['scan']
+                    self.q.put({'path': scan_path, 'data': data})
 
 
 if __name__ == "__main__":
