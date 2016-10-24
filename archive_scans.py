@@ -6,6 +6,8 @@ from lib.options import Options
 import lib.file_controller as File
 import os
 from dateutil.parser import parse
+from Queue import Queue
+from threading import Thread
 
 
 class ArchiveScans(object):
@@ -14,25 +16,34 @@ class ArchiveScans(object):
         self.servers = ServersController()
         self.opts = Options().params()
         self.path = os.path.join(os.path.dirname(__file__), 'details/')
+        self.threads = 5
+        self.q = Queue(maxsize=0)
 
-    def servers_write(self, path, server):
-        server_path = path + "%s_%s/" % (server['hostname'], server['id'])
-        File.write_dir(server_path)
-        return server_path
+    def servers_path(self, path, server):
+        return path + "%s_%s/" % (server['hostname'], server['id'])
 
-    def scans_write(self, path, scan):
-        scan_path = path + "%s_%s_%s_details.txt" % (scan['module'],
-                                                     scan['id'],
-                                                     self.iso8601(scan['created_at']))
-        File.write_file(scan_path, str(scan))
+    def scans_path(self, path, scan):
+        return path + "%s_%s_%s_details.txt" % (scan['module'],
+                                                scan['id'],
+                                                self.iso8601(scan['created_at']))
 
     def iso8601(self, date):
         return parse(date).strftime("%Y-%m-%d")
 
+    def consumer(self, q):
+        while True:
+            queue_data = self.q.get()
+            scan_path, data = queue_data[0], queue_data[1]
+            File.write_file(scan_path, str(data))
+            print "wrote %s_%s" % (data['id'], data['module'])
+            self.q.task_done()
+
     def archive(self):
         servers_index = self.servers.index()
         for server in servers_index['servers']:
-            server_path = self.servers_write(self.path, server)
+            server_path = self.servers_path(self.path, server)
+            File.write_dir(server_path)
+
             kwargs = {
                 'server_id': server['id'],
                 'since': self.opts['since'],
@@ -40,10 +51,15 @@ class ArchiveScans(object):
             }
 
             scans_index = self.scans.index(**kwargs)
-            for scan in scans_index:
-                data = self.scans.show(scan['id'])['scan']
-                self.scans_write(server_path, data)
-                print "wrote %s_%s" % (data['id'], data['module'])
+            for i in range(self.threads):
+                worker = Thread(target=self.consumer, args=(self.q,))
+                worker.setDaemon(True)
+                worker.start()
+
+                for scan in scans_index:
+                    data = self.scans.show(scan['id'])['scan']
+                    scan_path = self.scans_path(server_path, data)
+                    self.q.put([scan_path, data])
 
 
 if __name__ == "__main__":
