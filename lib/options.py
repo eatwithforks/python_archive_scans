@@ -11,7 +11,6 @@ parser.add_argument('--until', help='Only get historical scans till <when> (ISO-
 
 class Options(object):
     def __init__(self):
-        self.known_params = ['since', 'until']
         self.args = vars(parser.parse_args())
 
     def params(self):

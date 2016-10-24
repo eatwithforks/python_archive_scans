@@ -30,15 +30,20 @@ class ArchiveScans(object):
     def iso8601(self, date):
         return parse(date).strftime("%Y-%m-%d")
 
+    def setup_queue(self):
+        for i in range(self.threads):
+            worker = Thread(target=self.consumer, args=(self.q,))
+            worker.setDaemon(True)
+            worker.start()
+
     def consumer(self, q):
         while True:
-            queue_data = self.q.get()
-            scan_path, data = queue_data[0], queue_data[1]
-            File.write_file(scan_path, str(data))
-            print "wrote %s_%s" % (data['id'], data['module'])
+            qdata = self.q.get()
+            File.write_file(qdata['path'], str(qdata['data']))
+            print "%s_%s" % (qdata['data']['id'], qdata['data']['module'])
             self.q.task_done()
 
-    def archive(self):
+    def producer(self):
         servers_index = self.servers.index()
         for server in servers_index['servers']:
             server_path = self.servers_path(self.path, server)
@@ -51,16 +56,12 @@ class ArchiveScans(object):
             }
 
             scans_index = self.scans.index(**kwargs)
-            for i in range(self.threads):
-                worker = Thread(target=self.consumer, args=(self.q,))
-                worker.setDaemon(True)
-                worker.start()
-
-                for scan in scans_index:
-                    data = self.scans.show(scan['id'])['scan']
-                    scan_path = self.scans_path(server_path, data)
-                    self.q.put([scan_path, data])
+            self.setup_queue()
+            for scan in scans_index:
+                data = self.scans.show(scan['id'])['scan']
+                scan_path = self.scans_path(server_path, data)
+                self.q.put({'path': scan_path, 'data': data})
 
 
 if __name__ == "__main__":
-    ArchiveScans().archive()
+    ArchiveScans().producer()
