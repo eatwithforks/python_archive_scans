@@ -41,9 +41,9 @@ class ArchiveScans(object):
 
     def files_consumer(self, q):
         while True:
-            qdata = self.queues['files'].get()
-            File.write_file(qdata['path'], str(qdata['data']))
-            print "%s_%s" % (qdata['data']['id'], qdata['data']['module'])
+            scan_data = self.queues['files'].get()
+            File.write_file(scan_data['path'], str(scan_data['data']))
+            print "%s_%s" % (scan_data['data']['id'], scan_data['data']['module'])
             self.queues['files'].task_done()
 
     def scans_consumer(self, q):
