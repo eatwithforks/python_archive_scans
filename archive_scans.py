@@ -2,25 +2,20 @@
 # -*- coding: utf-8 -*-
 from lib.scans_controller import ScansController
 from lib.servers_controller import ServersController
+from lib.queues_controller import QueuesController
 from lib.options import Options
 import lib.file_controller as File
 import os
 from dateutil.parser import parse
-from Queue import Queue
-from threading import Thread
 
 
 class ArchiveScans(object):
     def __init__(self):
         self.scans = ScansController()
         self.servers = ServersController()
+        self.queues = QueuesController()
         self.opts = Options().params()
         self.path = os.path.join(os.path.dirname(__file__), 'details/')
-        self.threads = 5
-        self.queues = {
-            'files': Queue(maxsize=0),
-            'scans': Queue(maxsize=0)
-        }
 
     def servers_path(self, path, server):
         return path + "%s_%s/" % (server['hostname'], server['id'])
@@ -33,25 +28,19 @@ class ArchiveScans(object):
     def iso8601(self, date):
         return parse(date).strftime("%Y-%m-%d")
 
-    def setup_queue(self, do_work, queue):
-        for i in range(self.threads):
-            worker = Thread(target=do_work, args=(queue,))
-            worker.setDaemon(True)
-            worker.start()
-
     def files_consumer(self, q):
         while True:
-            scan_data = self.queues['files'].get()
+            scan_data = self.queues.peek('files')
             File.write_file(scan_data['path'], str(scan_data['data']))
             print "%s_%s" % (scan_data['data']['id'], scan_data['data']['module'])
-            self.queues['files'].task_done()
+            self.queues.dequeue('files')
 
     def scans_consumer(self, q):
         while True:
-            scan_data = self.queues['scans'].get()
+            scan_data = self.queues.peek('scans')
             scan_details = self.scans.show(scan_data['scan']['id'])['scan']
-            self.queues['files'].put({'path': scan_data['path'], 'data': scan_details})
-            self.queues['scans'].task_done()
+            self.queues.enqueue('files', {'path': scan_data['path'], 'data': scan_details})
+            self.queues.dequeue('scans')
 
     def producer(self):
         servers_index = self.servers.index()
@@ -65,14 +54,14 @@ class ArchiveScans(object):
                 'until': self.opts['until']
             }
 
-            self.setup_queue(self.files_consumer, self.queues['files'])
-            self.setup_queue(self.scans_consumer, self.queues['scans'])
+            self.queues.setup_queue(self.files_consumer, 'files')
+            self.queues.setup_queue(self.scans_consumer, 'scans')
 
             scans_index = self.scans.index(**kwargs)
             for scan in scans_index:
                 scan_path = self.scans_path(server_path, scan)
                 if not os.path.isfile(scan_path):
-                    self.queues['scans'].put({'path': scan_path, 'scan': scan})
+                    self.queues.enqueue('scans', {'path': scan_path, 'scan': scan})
 
 
 if __name__ == "__main__":
