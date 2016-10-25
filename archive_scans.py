@@ -48,12 +48,7 @@ class ArchiveScans(object):
             for server in servers_index['servers']:
                 server_path = self.servers_path(self.path, server)
                 File.write_dir(server_path)
-
-                kwargs = {
-                    'server_id': server['id'],
-                    'since': self.opts['since'],
-                    'until': self.opts['until']
-                }
+                kwargs = { 'server_id': server['id'], 'since': self.opts['since'], 'until': self.opts['until'] }
 
                 self.queues.setup_queue(self.files_consumer, 'files')
                 self.queues.setup_queue(self.scans_consumer, 'scans')
