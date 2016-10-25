@@ -1,12 +1,12 @@
-### Script to retrieve and store your historical scan data locally
+#### Script to retrieve and store your historical scan data locally
 
-### Program description
+#### Program description
 
 The Python program file ‘archive_scans.py’ retrieves and archives information on historical scans.
 
 The program makes use of the Halo SDK which handles functions like making REST calls, creating and parsing JSON responses, authentication and error handling.
 
-### Install instructions
+#### Install instructions
 
 1. Requires Python 2.7.10 version or higher 
 2. Install the SDK from https://github.com/cloudpassage/cloudpassage-halo-python-sdk
@@ -18,7 +18,7 @@ key_id: 12345
 secret_key: abcabcabcabcabc
 ```
 
-### Program Usage
+#### Program Usage
 Run the following command to see program usage:
 ```python archive_scans.py -h```
 
