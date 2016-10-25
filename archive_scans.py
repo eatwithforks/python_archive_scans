@@ -17,8 +17,8 @@ class ArchiveScans(object):
         self.date = DateController()
         self.opts = Options().params()
         self.path = os.path.join(os.path.dirname(__file__), 'details/')
-        self.queues.setup_queue(self.files_consumer)
-        self.queues.setup_queue(self.scans_consumer)
+        self.queues.setup_thread(self.files_consumer)
+        self.queues.setup_thread(self.scans_consumer)
 
     def servers_path(self, path, server):
         return path + "%s_%s/" % (server['hostname'], server['id'])
