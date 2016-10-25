@@ -26,3 +26,6 @@ class QueuesController(object):
 
     def dequeue(self, queue):
         self.queues[queue].task_done()
+
+    def shutdown(self, queue):
+        self.queues[queue].join()

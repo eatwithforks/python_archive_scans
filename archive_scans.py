@@ -63,5 +63,8 @@ class ArchiveScans(object):
                             self.queues.enqueue('scans', {'path': scan_path, 'scan': scan})
 
 
+        self.queues.shutdown('files')
+        self.queues.shutdown('scans')
+
 if __name__ == "__main__":
     ArchiveScans().producer()
