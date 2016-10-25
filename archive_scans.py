@@ -28,14 +28,14 @@ class ArchiveScans(object):
     def iso8601(self, date):
         return parse(date).strftime("%Y-%m-%d")
 
-    def files_consumer(self, q):
+    def files_consumer(self):
         while True:
             scan_data = self.queues.peek('files')
             File.write_file(scan_data['path'], str(scan_data['data']))
             print "%s_%s" % (scan_data['data']['id'], scan_data['data']['module'])
             self.queues.dequeue('files')
 
-    def scans_consumer(self, q):
+    def scans_consumer(self):
         while True:
             scan_data = self.queues.peek('scans')
             scan_details = self.scans.show(scan_data['scan']['id'])['scan']
@@ -50,8 +50,8 @@ class ArchiveScans(object):
                 File.write_dir(server_path)
                 kwargs = { 'server_id': server['id'], 'since': self.opts['since'], 'until': self.opts['until'] }
 
-                self.queues.setup_queue(self.files_consumer, 'files')
-                self.queues.setup_queue(self.scans_consumer, 'scans')
+                self.queues.setup_queue(self.files_consumer)
+                self.queues.setup_queue(self.scans_consumer)
 
                 scans_index = self.scans.index(**kwargs)
                 if scans_index['scans']:
