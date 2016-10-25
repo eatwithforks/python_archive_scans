@@ -27,7 +27,8 @@ class ApiController():
             if "next" in index["pagination"]:
                 index = self.get(self.parse_next_endpoint(index["pagination"]["next"]))
             else:
-                return aggregate_result
+                index[primary_key] = aggregate_result
+                return index
         return self.get(endpoint)
 
     def parse_next_endpoint(self, next_url):

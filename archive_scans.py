@@ -44,24 +44,26 @@ class ArchiveScans(object):
 
     def producer(self):
         servers_index = self.servers.index()
-        for server in servers_index['servers']:
-            server_path = self.servers_path(self.path, server)
-            File.write_dir(server_path)
+        if servers_index['servers']:
+            for server in servers_index['servers']:
+                server_path = self.servers_path(self.path, server)
+                File.write_dir(server_path)
 
-            kwargs = {
-                'server_id': server['id'],
-                'since': self.opts['since'],
-                'until': self.opts['until']
-            }
+                kwargs = {
+                    'server_id': server['id'],
+                    'since': self.opts['since'],
+                    'until': self.opts['until']
+                }
 
-            self.queues.setup_queue(self.files_consumer, 'files')
-            self.queues.setup_queue(self.scans_consumer, 'scans')
+                self.queues.setup_queue(self.files_consumer, 'files')
+                self.queues.setup_queue(self.scans_consumer, 'scans')
 
-            scans_index = self.scans.index(**kwargs)
-            for scan in scans_index:
-                scan_path = self.scans_path(server_path, scan)
-                if not os.path.isfile(scan_path):
-                    self.queues.enqueue('scans', {'path': scan_path, 'scan': scan})
+                scans_index = self.scans.index(**kwargs)
+                if scans_index['scans']:
+                    for scan in scans_index['scans']:
+                        scan_path = self.scans_path(server_path, scan)
+                        if not os.path.isfile(scan_path):
+                            self.queues.enqueue('scans', {'path': scan_path, 'scan': scan})
 
 
 if __name__ == "__main__":
