@@ -17,7 +17,10 @@ class ArchiveScans(object):
         self.opts = Options().params()
         self.path = os.path.join(os.path.dirname(__file__), 'details/')
         self.threads = 5
-        self.q = Queue(maxsize=0)
+        self.queues = {
+            'files': Queue(maxsize=0),
+            'scans': Queue(maxsize=0)
+        }
 
     def servers_path(self, path, server):
         return path + "%s_%s/" % (server['hostname'], server['id'])
@@ -30,18 +33,25 @@ class ArchiveScans(object):
     def iso8601(self, date):
         return parse(date).strftime("%Y-%m-%d")
 
-    def setup_queue(self):
+    def setup_queue(self, do_work, queue):
         for i in range(self.threads):
-            worker = Thread(target=self.consumer, args=(self.q,))
+            worker = Thread(target=do_work, args=(queue,))
             worker.setDaemon(True)
             worker.start()
 
-    def consumer(self, q):
+    def files_consumer(self, q):
         while True:
-            qdata = self.q.get()
+            qdata = self.queues['files'].get()
             File.write_file(qdata['path'], str(qdata['data']))
             print "%s_%s" % (qdata['data']['id'], qdata['data']['module'])
-            self.q.task_done()
+            self.queues['files'].task_done()
+
+    def scans_consumer(self, q):
+        while True:
+            scan_data = self.queues['scans'].get()
+            scan_details = self.scans.show(scan_data['scan']['id'])['scan']
+            self.queues['files'].put({'path': scan_data['path'], 'data': scan_details})
+            self.queues['scans'].task_done()
 
     def producer(self):
         servers_index = self.servers.index()
@@ -55,13 +65,14 @@ class ArchiveScans(object):
                 'until': self.opts['until']
             }
 
+            self.setup_queue(self.files_consumer, self.queues['files'])
+            self.setup_queue(self.scans_consumer, self.queues['scans'])
+
             scans_index = self.scans.index(**kwargs)
-            self.setup_queue()
             for scan in scans_index:
                 scan_path = self.scans_path(server_path, scan)
                 if not os.path.isfile(scan_path):
-                    data = self.scans.show(scan['id'])['scan']
-                    self.q.put({'path': scan_path, 'data': data})
+                    self.queues['scans'].put({'path': scan_path, 'scan': scan})
 
 
 if __name__ == "__main__":
