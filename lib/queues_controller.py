@@ -12,9 +12,9 @@ class QueuesController(object):
             'scans': Queue(maxsize=0)
         }
 
-    def setup_queue(self, do_work, queue):
+    def setup_queue(self, do_work):
         for i in range(self.threads):
-            worker = Thread(target=do_work, args=(queue,))
+            worker = Thread(target=do_work)
             worker.setDaemon(True)
             worker.start()
 
