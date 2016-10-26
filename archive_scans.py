@@ -31,7 +31,7 @@ class ArchiveScans(object):
     def files_consumer(self):
         while True:
             scan_data = self.queues.peek('files')
-            File.write_file(scan_data['path'], str(scan_data['data']))
+            File.write_file(scan_data['path'], scan_data['data'])
             print "%s_%s" % (scan_data['data']['id'], scan_data['data']['module'])
             self.queues.dequeue('files')
 
