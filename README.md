@@ -9,7 +9,7 @@ The program makes use of the Halo SDK which handles functions like making REST c
 #### Install instructions
 
 1. Requires Python 2.7.10 version or higher 
-2. Install the SDK from https://github.com/cloudpassage/cloudpassage-halo-python-sdk
+2. Install the SDK `pip install cloudpassage`
 3. Halo requires the script to pass both the key ID and secret key values for a valid Halo API key in order to make API calls.
 4. Copy the API Key_id and Secret Key from your Halo account into `portal.yml` located in `configs/portal.yml`
 
