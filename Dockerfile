@@ -9,6 +9,8 @@ COPY ./ /source/
 
 WORKDIR /source/
 
+RUN pip install -r cloudpassage
+
 RUN pip install -r requirements-testing.txt
 
 RUN pip install codeclimate-test-reporter
