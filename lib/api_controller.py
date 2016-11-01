@@ -1,12 +1,16 @@
 import re
 import cloudpassage
+import os
 from config import CONFIG
 
 
 class ApiController():
     @staticmethod
     def build_http_session():
-        session = cloudpassage.HaloSession(CONFIG["key_id"], CONFIG["secret_key"])
+        key_id = os.environ['KEY_ID'] or CONFIG['key_id']
+        secret_key = os.environ['SECRET_KEY'] or CONFIG['secret_key']
+
+        session = cloudpassage.HaloSession(key_id, secret_key)
         return cloudpassage.HttpHelper(session)
 
     def get(self, endpoint):
