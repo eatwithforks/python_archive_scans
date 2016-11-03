@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 from api_controller import ApiController
 
+
 class ScansController(object):
     def __init__(self):
         self.api = ApiController()

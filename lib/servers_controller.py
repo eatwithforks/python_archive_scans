@@ -1,5 +1,6 @@
 from api_controller import ApiController
 
+
 class ServersController(object):
     def __init__(self):
         self.api = ApiController()

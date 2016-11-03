@@ -41,7 +41,7 @@ class ApiController():
     def form_filter(self, **kwargs):
         filter_list = []
         for filt in kwargs:
-            if type(kwargs[filt]) is list :
+            if type(kwargs[filt]) is list:
                 filter_list.append("%s=%s" % (filt, ','.join(kwargs[filt])))
             elif kwargs[filt]:
                 filter_list.append("%s=%s" % (filt, kwargs[filt]))
